@@ -10,7 +10,7 @@ tools:
   edit:
 engine:
   id: gemini
-  model: gemini-pro-latest
+  model: gemini-2.5-pro
 timeout-minutes: 45
 network:
   allowed:
