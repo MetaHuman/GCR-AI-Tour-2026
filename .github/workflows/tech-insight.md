@@ -8,7 +8,9 @@ permissions:
 tools:
   bash: [":*"]
   edit:
-engine: copilot
+engine:
+  id: gemini
+  model: gemini-1.5-pro
 timeout-minutes: 45
 network:
   allowed:
