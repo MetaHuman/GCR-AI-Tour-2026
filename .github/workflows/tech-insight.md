@@ -10,7 +10,7 @@ tools:
   edit:
 engine:
   id: gemini
-  model: gemini-2.5-pro
+  model: gemini-2.5-flash
 timeout-minutes: 45
 network:
   allowed:
