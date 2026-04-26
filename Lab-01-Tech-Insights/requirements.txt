@@ -4,3 +4,4 @@ PyYAML
 httpx
 feedparser
 beautifulsoup4
+google-genai

@@ -1,29 +1,132 @@
-#!/usr/bin/env python3
-"""MCP Script: wraps tech.render_report_or_fallback for gh-aw."""
-
-from __future__ import annotations
-
 import json
+import os
 import sys
+from datetime import datetime
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
-from tech_insight_tools import tech_render_report_or_fallback
+sys.stdout.reconfigure(encoding='utf-8')
 
+def main():
+    base_path = Path(__file__).parent.parent
+    hotspots_file = base_path / "output" / "clusters" / "hotspots.json"
+    insights_file = base_path / "output" / "insights" / "insights.json"
+    signals_file = base_path / "output" / "raw_signals.json"
+    output_report = base_path / "output" / "report.md"
 
-def _print_result(result: object) -> None:
-    if isinstance(result, str):
-        print(result)
-    else:
-        print(json.dumps(result, ensure_ascii=False))
+    print("🎨 正在收集所有数据并准备渲染报告...")
 
+    try:
+        with open(hotspots_file, 'r', encoding='utf-8') as f:
+            hotspots_data = json.load(f)
+        with open(insights_file, 'r', encoding='utf-8') as f:
+            insights_data = json.load(f)
+        with open(signals_file, 'r', encoding='utf-8') as f:
+            signals = json.load(f)
+    except FileNotFoundError as e:
+        print(f"❌ 渲染失败：找不到必要文件 {e.filename}")
+        return
+
+    # Support both raw list and wrapped {hotspots:[...]} / {insights:[...]} schemas
+    hotspots = hotspots_data.get("hotspots", hotspots_data) if isinstance(hotspots_data, dict) else hotspots_data
+    insights = insights_data.get("insights", insights_data) if isinstance(insights_data, dict) else insights_data
+
+    # Build lookup: hotspot_id -> insight
+    insight_map = {i.get("hotspot_id"): i for i in insights}
+
+    # Build lookup for fixing RSS feed URLs in hotspot samples.
+    # Key: (source_name, normalized_title), value: actual article link
+    _rss_patterns = ("/feed", "/rss", "rss.xml", "index.xml", "atom.xml", "feed/")
+
+    def _is_rss_url(url):
+        return any(p in url for p in _rss_patterns)
+
+    def _best_link(sample_title, sample_url, signals):
+        """Return actual article link by fuzzy-matching sample title against raw signals."""
+        if not _is_rss_url(sample_url):
+            return sample_url
+        needle = sample_title.strip().lower()
+        # exact match first
+        for s in signals:
+            if s.get("title", "").strip().lower() == needle:
+                return s["link"]
+        # substring match: sample title contains signal title or vice versa
+        for s in signals:
+            sig_title = s.get("title", "").strip().lower()
+            if sig_title and (sig_title in needle or needle in sig_title):
+                return s["link"]
+        # word-overlap fallback: >50% of words match
+        needle_words = set(needle.split())
+        best_score, best_link = 0.0, sample_url
+        for s in signals:
+            sig_words = set(s.get("title", "").strip().lower().split())
+            if not sig_words:
+                continue
+            overlap = len(needle_words & sig_words) / max(len(needle_words), len(sig_words))
+            if overlap > best_score:
+                best_score, best_link = overlap, s.get("link", sample_url)
+        return best_link if best_score > 0.5 else sample_url
+
+    date_str = datetime.now().strftime("%Y-%m-%d")
+
+    report_content = f"""# 🚀 Tech Insight 自动化报告 ({date_str})
+
+> 本报告由 Gemini 驱动，全自动分析 24 小时内的全球技术信号。
+
+---
+
+## 🎯 核心技术热点 (Top {len(hotspots)})
+
+"""
+
+    for spot in hotspots:
+        hid = spot.get("hotspot_id", "")
+        title = spot.get("title", "未知热点")
+        summary = spot.get("summary", "")
+        heat = spot.get("overall_heat_score", 0)
+        coverage = spot.get("coverage", {})
+        source_count = coverage.get("source_count", 0)
+        companies = coverage.get("companies", [])
+
+        insight = insight_map.get(hid, {})
+        what_changed = insight.get("what_changed", "")
+        why_matters = insight.get("why_it_matters", "")
+        next_actions = insight.get("next_actions", [])
+
+        report_content += f"### 🔥 {title}\n"
+        if summary:
+            report_content += f"> {summary}\n\n"
+        report_content += f"- **热度评分**: {heat}　**覆盖源**: {source_count}　**相关公司**: {', '.join(companies) if companies else '—'}\n"
+        if what_changed:
+            report_content += f"- **发生了什么**: {what_changed}\n"
+        if why_matters:
+            report_content += f"- **为什么重要**: {why_matters}\n"
+        if next_actions:
+            report_content += f"- **建议行动**: {'; '.join(next_actions[:2])}\n"
+
+        samples = spot.get("samples", [])
+        if samples:
+            report_content += "\n**相关文章:**\n"
+            for s in samples[:3]:
+                stitle = s.get("title", s.get("platform", "查看原文"))
+                url = _best_link(stitle, s.get("url", "#"), signals)
+                report_content += f"  - [{stitle}]({url})\n"
+
+        report_content += "\n---\n\n"
+
+    report_content += "## 📡 原始信号摘要 (前 10 条)\n\n"
+    for sig in signals[:10]:
+        source = sig.get("source_name", sig.get("platform", "未知"))
+        title = sig.get("title", "")
+        link = sig.get("link", sig.get("url", "#"))
+        report_content += f"- **[{source}]** {title} ([查看原文]({link}))\n"
+
+    report_content += f"\n\n---\n*Generated by Tech Insight AI Pipeline · {date_str}*"
+
+    with open(output_report, 'w', encoding='utf-8') as f:
+        f.write(report_content)
+
+    print(f"🎉 最终报告已生成：")
+    print(f"📄 {output_report.absolute()}")
 
 if __name__ == "__main__":
-    try:
-        raw = sys.stdin.read().strip()
-        kwargs = json.loads(raw) if raw else {}
-        result = tech_render_report_or_fallback(**kwargs)
-        _print_result(result)
-    except Exception as e:
-        print(json.dumps({"error": str(e)}, ensure_ascii=False))
-        sys.exit(1)
+    main()

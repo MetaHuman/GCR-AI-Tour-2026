@@ -3,3 +3,4 @@ feedparser
 beautifulsoup4
 PyYAML
 python-dotenv
+google-genai
