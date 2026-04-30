@@ -19,12 +19,18 @@ def main():
     if env_path.exists():
         load_dotenv(env_path)
 
-    api_key = os.environ.get("GOOGLE_API_KEY")
-    if not api_key:
-        print("❌ 错误: 未检测到 GOOGLE_API_KEY 环境变量。请在 .env 中配置。")
-        return
-
-    client = genai.Client(api_key=api_key)
+    auth_type = os.environ.get("GOOGLE_AUTH_TYPE", "apikey").strip().lower()
+    if auth_type == "adc":
+        import google.auth
+        credentials, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
+        client = genai.Client(credentials=credentials)
+        print("🔑 使用 ADC 认证（Application Default Credentials）")
+    else:
+        api_key = os.environ.get("GOOGLE_API_KEY")
+        if not api_key:
+            print("❌ 错误: 未检测到 GOOGLE_API_KEY。请在 .env 中配置，或将 GOOGLE_AUTH_TYPE 设为 adc。")
+            return
+        client = genai.Client(api_key=api_key)
 
     with open(hotspots_file, 'r', encoding='utf-8') as f:
         hotspots_data = json.load(f)
