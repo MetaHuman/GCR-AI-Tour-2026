@@ -49,6 +49,28 @@ function parseMarkdown(markedLib, markdown) {
   throw new Error("marked 已加载但未暴露 parse()。");
 }
 
+function applyVibeAnimations(contentEl) {
+  const children = contentEl.children;
+  for (let i = 0; i < children.length; i++) {
+    // 强制重绘以重新触发动画
+    children[i].style.animation = 'none';
+    children[i].style.opacity = '0';
+    setTimeout(() => {
+      // 交错动画延迟 (比如每个元素间隔 0.15s，最多封顶 3s)
+      const delay = Math.min(i * 0.15, 3);
+      children[i].style.animation = `fadeInLine 0.5s ease forwards ${delay}s`;
+    }, 10);
+  }
+}
+
+function removeVibeAnimations(contentEl) {
+  const children = contentEl.children;
+  for (let i = 0; i < children.length; i++) {
+    children[i].style.animation = 'none';
+    children[i].style.opacity = '1';
+  }
+}
+
 async function renderMarkdown(markdown) {
   const markedLib = await getMarked();
   const html = parseMarkdown(markedLib, markdown);
@@ -64,6 +86,10 @@ async function renderMarkdown(markdown) {
 
   const content = document.getElementById("content");
   content.innerHTML = clean;
+  
+  if (document.body.classList.contains('vibe-theme')) {
+    applyVibeAnimations(content);
+  }
 }
 
 async function loadReport(reportPath) {
@@ -82,7 +108,26 @@ async function loadReport(reportPath) {
   }
 }
 
+function setupThemeToggle() {
+  const toggleBtn = document.getElementById('theme-toggle');
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      document.body.classList.toggle('vibe-theme');
+      const isVibe = document.body.classList.contains('vibe-theme');
+      toggleBtn.textContent = isVibe ? '🔥 Normal Mode' : '✨ Vibe Mode';
+      
+      const content = document.getElementById('content');
+      if (isVibe) {
+        applyVibeAnimations(content);
+      } else {
+        removeVibeAnimations(content);
+      }
+    });
+  }
+}
+
 function wireUi() {
+  setupThemeToggle();
   loadReport("report.md");
 }
 

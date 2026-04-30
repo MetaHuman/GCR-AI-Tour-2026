@@ -14,6 +14,7 @@
 html,
 body {
   height: 100%;
+  transition: background-color 0.3s, color 0.3s;
 }
 
 body {
@@ -45,6 +46,7 @@ body {
   background: rgba(246, 245, 242, 0.8);
   border-bottom: 1px solid var(--border);
   z-index: 10;
+  transition: all 0.3s;
 }
 
 .topbar__inner {
@@ -61,6 +63,23 @@ body {
   font-weight: 600;
   letter-spacing: 0.6px;
   text-transform: uppercase;
+  transition: all 0.3s;
+}
+
+.btn-toggle {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.9em;
+  transition: all 0.3s ease;
+}
+
+.btn-toggle:hover {
+  background: rgba(0,0,0,0.05);
 }
 
 .status {
@@ -70,6 +89,7 @@ body {
   border: 1px solid var(--border);
   background: var(--panel);
   color: var(--muted);
+  transition: all 0.3s;
 }
 
 .content {
@@ -78,11 +98,13 @@ body {
   border-radius: 16px;
   border: 1px solid var(--border);
   background: var(--panel);
+  transition: all 0.3s;
 }
 
 .markdown-body {
   color: var(--text);
   background: transparent;
+  transition: color 0.3s;
 }
 
 .markdown-body a {
@@ -107,8 +129,103 @@ body {
   border-top: 1px solid var(--border);
   color: var(--muted);
   background: rgba(255, 255, 255, 0.7);
+  transition: all 0.3s;
 }
 
 .footer__inner {
   padding: 14px 16px;
+}
+
+/* =========================================
+   🏕️ VIBE SUMMER CAMP THEME (DARK/NEON)
+   ========================================= */
+
+body.vibe-theme {
+  --bg: #0b0d17;
+  --panel: #141724;
+  --border: #293042;
+  --text: #e2e8f0;
+  --muted: #8b949e;
+  --accent: #00ffcc;
+  --glow: 0 0 15px rgba(0, 255, 204, 0.4);
+}
+
+body.vibe-theme .btn-toggle {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 5px rgba(0, 255, 204, 0.3);
+}
+
+body.vibe-theme .btn-toggle:hover {
+  background: var(--accent);
+  color: #0b0d17;
+  box-shadow: var(--glow);
+}
+
+body.vibe-theme .topbar {
+  background: rgba(11, 13, 23, 0.85);
+  border-bottom: 1px solid var(--accent);
+  box-shadow: var(--glow);
+}
+
+body.vibe-theme .brand {
+  color: var(--accent);
+  text-shadow: 0 0 8px var(--accent);
+}
+
+body.vibe-theme .content {
+  box-shadow: var(--glow);
+  border-color: var(--accent);
+}
+
+body.vibe-theme .markdown-body a {
+  color: #ff00ff;
+  text-shadow: 0 0 5px rgba(255, 0, 255, 0.5);
+}
+
+body.vibe-theme .markdown-body h1,
+body.vibe-theme .markdown-body h2,
+body.vibe-theme .markdown-body h3,
+body.vibe-theme .markdown-body h4 {
+  color: var(--accent);
+  border-bottom-color: var(--border);
+}
+
+body.vibe-theme .markdown-body code,
+body.vibe-theme .markdown-body pre {
+  background: #1e2333;
+  border: 1px solid var(--border);
+  color: #f6d365;
+}
+
+body.vibe-theme .markdown-body blockquote {
+  border-left-color: #ff00ff;
+  color: #a0aec0;
+}
+
+body.vibe-theme .markdown-body hr {
+  border-color: var(--border);
+}
+
+body.vibe-theme .status {
+  border-color: #ff00ff;
+  color: #ff00ff;
+  box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
+}
+
+body.vibe-theme .footer {
+  background: rgba(20, 23, 36, 0.8);
+  border-top-color: var(--accent);
+}
+
+/* AI Generating Animation */
+@keyframes fadeInLine {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
